@@ -8,6 +8,8 @@ import React from 'react';
 import ReactDOM from 'react-dom'
 import {UnControlled as CodeMirror} from 'react-codemirror2'
 
+import {RECEIVE_TEXT, CHANGE_TEXT, GET_TEXT, CLIENT_CONNECT} from './constants';
+
 
 class App extends React.Component {
 
@@ -15,7 +17,6 @@ class App extends React.Component {
     super(props);
 
     this.socket = io('http://localhost:3000');
-
     this.state = {
       text: ''
     }
@@ -24,14 +25,18 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    this.socket.on('text', (data) => {
+    this.socket.on(RECEIVE_TEXT, (data) => {
       this.setState({text: data.text});
+    });
+    this.socket.on(CLIENT_CONNECT, () => {
+      this.socket.emit(GET_TEXT, {});
     });
   }
 
-  handleEditorChange(event) {
-    console.log('value: ' + event.target.value);
-    this.socket.emit('changeText', {text: event.target.value});
+  handleEditorChange(editor, data, value) {
+    if (value !== this.state.text) {
+    this.socket.emit(CHANGE_TEXT, {text: event.target.value});
+    }
   }
 
   render() {
@@ -42,12 +47,7 @@ class App extends React.Component {
         theme: 'material',
         lineNumbers: true
       }}
-      onChange={(editor, data, value) => {
-        console.log('value: ' + value);
-        if (value !== this.state.text) {
-          this.socket.emit('changeText', {text: value});
-        }
-      }}
+      onChange={this.handleEditorChange}
     />);
   }
 }
